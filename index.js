@@ -53,21 +53,21 @@ async function run() {
     });
 
 
-    // 1. GET /books — get all books (public)
+    // GET /books — get all books (public)
     app.get('/books', async (req, res) => {
       const cursor = booksCollection.find();
       const books = await cursor.toArray();
       res.send(books);
     });
 
-    // 2. GET /books/:id — get one book
+    // GET /books/:id — get one book
     app.get('/books/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const book = await booksCollection.findOne(query);
       res.send(book);
     });
-    // 3. POST /books — add a book
+    // POST /books — add a book
     app.post('/books', async (req, res) => {
       const newBook = req.body;
       newBook.createdAt = new Date();
@@ -75,7 +75,7 @@ async function run() {
       res.send(result);
     });
 
-    // 4. PATCH /books/:id — update a book
+    // PATCH /books/:id — update a book
     app.patch('/books/:id', async (req, res) => {
       const id = req.params.id;
       const updatedBook = req.body;
@@ -94,7 +94,7 @@ async function run() {
       res.send(result);
     });
 
-    // 5. DELETE /books/:id — delete a book
+    // DELETE /books/:id — delete a book
     app.delete('/books/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -102,7 +102,7 @@ async function run() {
       res.send(result);
     });
 
-    // 6. POST /borrows — borrow a book (with $inc and double-borrow check)
+    // POST /borrows — borrow a book (with $inc and double-borrow check)
     app.post('/borrows', async (req, res) => {
       const borrowData = req.body;
       
@@ -131,10 +131,40 @@ async function run() {
       res.send(result);
     });
 
+    // GET /borrows — get the borrows of the logged in user
+    app.get('/borrows', async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { userEmail: email };
+      }
+      const result = await borrowsCollection.find(query).toArray();
+      res.send(result);
+    });
 
+    // DELETE /borrows/:id — return a book (increase totalCopies by 1)
+    app.delete('/borrows/:id', async (req, res) => {
+      const id = req.params.id;
+      const borrowQuery = { _id: new ObjectId(id) };
+      const borrowItem = await borrowsCollection.findOne(borrowQuery);
 
+      if (borrowItem) {
+        await booksCollection.updateOne(
+          { _id: new ObjectId(borrowItem.bookId) },
+          { $inc: { totalCopies: 1 } }
+        );
+      }
 
-//=============================
+      const result = await borrowsCollection.deleteOne(borrowQuery);
+      res.send(result);
+    });
+
+    console.log("Connected to MongoDB successfully!");
+  } finally {
+    // Ensures client connection status
+  }
+}
+run().catch(console.dir);
 app.get('/', (req, res) => {
   res.send('BookNook Server is running...');
 });
