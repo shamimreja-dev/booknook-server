@@ -23,6 +23,36 @@ const client = new MongoClient(uri, {
   }
 });
 
+// JWT Verification Middleware
+const verifyJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: 'Unauthorized access' });
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.JWT_SECRET || 'secret_key', (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: 'Forbidden access' });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
+
+async function run() {
+  try {
+    const database = client.db('bookNookDB');
+    const booksCollection = database.collection('books');
+    const borrowsCollection = database.collection('borrows');
+
+    // JWT Token Generation API
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1h' });
+      res.send({ token });
+    });
+    
+
 //=============================
 app.get('/', (req, res) => {
   res.send('BookNook Server is running...');
