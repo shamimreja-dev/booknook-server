@@ -67,7 +67,14 @@ async function run() {
       const book = await booksCollection.findOne(query);
       res.send(book);
     });
-    
+    // 3. POST /books — add a book
+    app.post('/books', async (req, res) => {
+      const newBook = req.body;
+      newBook.createdAt = new Date();
+      const result = await booksCollection.insertOne(newBook);
+      res.send(result);
+    });
+
 
 //=============================
 app.get('/', (req, res) => {
