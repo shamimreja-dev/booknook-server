@@ -75,6 +75,25 @@ async function run() {
       res.send(result);
     });
 
+    // 4. PATCH /books/:id — update a book
+    app.patch('/books/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedBook = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          title: updatedBook.title,
+          author: updatedBook.author,
+          category: updatedBook.category,
+          image: updatedBook.image,
+          description: updatedBook.description,
+          totalCopies: updatedBook.totalCopies
+        }
+      };
+      const result = await booksCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
 
 //=============================
 app.get('/', (req, res) => {
