@@ -51,6 +51,22 @@ async function run() {
       const token = jwt.sign(user, process.env.JWT_SECRET || 'secret_key', { expiresIn: '1h' });
       res.send({ token });
     });
+
+
+    // 1. GET /books — get all books (public)
+    app.get('/books', async (req, res) => {
+      const cursor = booksCollection.find();
+      const books = await cursor.toArray();
+      res.send(books);
+    });
+
+    // 2. GET /books/:id — get one book
+    app.get('/books/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const book = await booksCollection.findOne(query);
+      res.send(book);
+    });
     
 
 //=============================
