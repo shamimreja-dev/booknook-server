@@ -102,7 +102,36 @@ async function run() {
       res.send(result);
     });
 
-    
+    // 6. POST /borrows — borrow a book (with $inc and double-borrow check)
+    app.post('/borrows', async (req, res) => {
+      const borrowData = req.body;
+      
+      // Check if user already borrowed this book
+      const existingBorrow = await borrowsCollection.findOne({
+        bookId: borrowData.bookId,
+        userEmail: borrowData.userEmail
+      });
+
+      if (existingBorrow) {
+        return res.status(400).send({ message: 'You have already borrowed this book!' });
+      }
+
+      // Check if copies available
+      const bookQuery = { _id: new ObjectId(borrowData.bookId) };
+      const book = await booksCollection.findOne(bookQuery);
+      if (!book || book.totalCopies <= 0) {
+        return res.status(400).send({ message: 'Book is not available for borrowing.' });
+      }
+
+      // Decrease totalCopies by 1 using $inc
+      await booksCollection.updateOne(bookQuery, { $inc: { totalCopies: -1 } });
+
+      // Save borrow record
+      const result = await borrowsCollection.insertOne(borrowData);
+      res.send(result);
+    });
+
+
 
 
 //=============================
