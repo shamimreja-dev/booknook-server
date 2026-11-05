@@ -1,4 +1,3 @@
-
 import "dotenv/config";
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
@@ -8,33 +7,38 @@ import { MongoClient } from "mongodb";
 const uri = process.env.MONGODB_URI;
 
 if (!uri) {
-  throw new Error("MONGODB_URI is missing in .env");
+  throw new Error("MONGODB_URI is missing in environment variables");
 }
 
-if (!process.env.BETTER_AUTH_SECRET) {
-  throw new Error("BETTER_AUTH_SECRET is missing in .env");
-}
-
-if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-  throw new Error("Google OAuth credentials are missing in .env");
-}
+const baseURL =
+  process.env.BETTER_AUTH_URL || "https://booknook-server-2t5l.onrender.com";
 
 const client = new MongoClient(uri);
 
-await client.connect();
+const connectDB = async () => {
+  try {
+    await client.connect();
+    console.log("Connected to MongoDB successfully for Auth!");
+  } catch (err) {
+    console.error("MongoDB connection error:", err);
+  }
+};
+connectDB();
 
-const db = client.db(
-  process.env.MONGODB_DATABASE || "bookNookDB"
-);
+const db = client.db(process.env.MONGODB_DATABASE || "bookNookDB");
 
 export const auth = betterAuth({
   appName: "BookNook",
-
-  baseURL: "http://localhost:5000",
-
+  baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
 
-  trustedOrigins: ["http://localhost:3000"],
+  // trustedOrigins অবশ্যই Array হতে হবে (Function দেওয়া যাবে না)
+  trustedOrigins: [
+    "https://booknook-client-sepia.vercel.app",
+    "https://booknook-client-jww4hg82x-shamim-reja232.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5000",
+  ],
 
   database: mongodbAdapter(db, { client }),
 
@@ -52,8 +56,8 @@ export const auth = betterAuth({
   plugins: [
     jwt({
       jwt: {
-        issuer: "http://localhost:5000",
-        audience: "http://localhost:5000",
+        issuer: baseURL,
+        audience: baseURL,
         expirationTime: "15m",
       },
     }),

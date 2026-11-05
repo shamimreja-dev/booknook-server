@@ -1,4 +1,3 @@
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -13,26 +12,36 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 const FRONTEND_URL =
-  process.env.FRONTEND_URL || "http://localhost:3000";
+  process.env.FRONTEND_URL || "https://booknook-client-sepia.vercel.app";
 
 const BACKEND_URL =
-  process.env.BETTER_AUTH_URL || "http://localhost:5000";
+  process.env.BETTER_AUTH_URL || "https://booknook-server-2t5l.onrender.com";
 
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin.endsWith(".vercel.app") ||
+        origin.includes("localhost")
+      ) {
+        callback(null, true);
+      } else {
+        callback(null, true);
+      }
+    },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   })
 );
 
-// Better Auth
-app.all("/api/auth/{*any}", toNodeHandler(auth));
-
 app.use(express.json());
 
-// MongoDB
+// Better Auth handler (সঠিক রেজেক্স প্যাটার্ন - ক্র্যাশ ফিক্স করা হয়েছে)
+app.all(/api\/auth\/.*/, toNodeHandler(auth));
+
+// MongoDB Connection
 const uri = process.env.MONGODB_URI;
 
 if (!uri) {
@@ -82,7 +91,6 @@ async function verifyJWT(req, res, next) {
       });
     }
 
-    // Search using both string and ObjectId formats.
     const userConditions = [
       { _id: userId },
       { id: userId },
@@ -101,7 +109,6 @@ async function verifyJWT(req, res, next) {
     if (!user) {
       console.error("Authenticated user not found.");
       console.error("JWT subject:", userId);
-      console.error("User collection:", "user");
 
       return res.status(401).json({
         message: "Authenticated user not found",
@@ -133,7 +140,6 @@ app.get("/users/me", verifyJWT, (req, res) => {
 
 // ================= BOOK APIs =================
 
-// Get all books
 app.get("/books", async (req, res) => {
   try {
     const books = await booksCollection
@@ -148,7 +154,6 @@ app.get("/books", async (req, res) => {
   }
 });
 
-// Get one book
 app.get("/books/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -172,7 +177,6 @@ app.get("/books/:id", async (req, res) => {
   }
 });
 
-// Add book
 app.post("/books", verifyJWT, async (req, res) => {
   try {
     const {
@@ -229,7 +233,6 @@ app.post("/books", verifyJWT, async (req, res) => {
   }
 });
 
-// Update own book
 app.patch("/books/:id", verifyJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -312,7 +315,6 @@ app.patch("/books/:id", verifyJWT, async (req, res) => {
   }
 });
 
-// Delete own book
 app.delete("/books/:id", verifyJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -356,7 +358,6 @@ app.delete("/books/:id", verifyJWT, async (req, res) => {
 
 // ================= BORROW APIs =================
 
-// Borrow book
 app.post("/borrows", verifyJWT, async (req, res) => {
   try {
     const { bookId, borrowDate, returnDate } = req.body;
@@ -455,7 +456,6 @@ app.post("/borrows", verifyJWT, async (req, res) => {
   }
 });
 
-// Get my borrowed books
 app.get("/borrows", verifyJWT, async (req, res) => {
   try {
     const borrows = await borrowsCollection
@@ -472,7 +472,6 @@ app.get("/borrows", verifyJWT, async (req, res) => {
   }
 });
 
-// Return book
 app.delete("/borrows/:id", verifyJWT, async (req, res) => {
   try {
     const { id } = req.params;
@@ -533,16 +532,12 @@ async function startServer() {
 
     booksCollection = database.collection("books");
     borrowsCollection = database.collection("borrows");
-
-    // Better Auth default MongoDB user collection
     usersCollection = database.collection("user");
 
     console.log("Connected to MongoDB successfully!");
-    console.log("User collection:", "user");
 
     app.listen(port, () => {
       console.log(`BookNook server running on port ${port}`);
-      console.log(`Better Auth: ${BACKEND_URL}/api/auth`);
     });
   } catch (error) {
     console.error("Server startup failed:", error);
