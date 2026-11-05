@@ -32,10 +32,18 @@ export const auth = betterAuth({
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
 
-  // trustedOrigins অবশ্যই Array হতে হবে (Function দেওয়া যাবে না)
+  // সেশন ও কুকির ডোমেইন সমস্যা দূর করতে এটি সবচেয়ে গুরুত্বপূর্ণ
+  advanced: {
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+    },
+  },
+
   trustedOrigins: [
     "https://booknook-client-sepia.vercel.app",
     "https://booknook-client-jww4hg82x-shamim-reja232.vercel.app",
+    "https://booknook-client-mj35yi7jw-shamim-reja232.vercel.app",
     "http://localhost:3000",
     "http://localhost:5000",
   ],
