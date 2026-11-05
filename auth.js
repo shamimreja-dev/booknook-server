@@ -32,7 +32,6 @@ export const auth = betterAuth({
   baseURL,
   secret: process.env.BETTER_AUTH_SECRET,
 
-  // সেশন ও ক্রস-ডোমেইন কুকির সিকিউরিটি অ্যাট্রিবিউট
   advanced: {
     defaultCookieAttributes: {
       sameSite: "none",
@@ -40,7 +39,7 @@ export const auth = betterAuth({
     },
   },
 
-  // অরিজিন ব্লকিং বা Invalid Origin এরর এড়াতে সব ডোমেইন অ্যারেতে রাখা হয়েছে
+  // কোনো ফাংশন নয়, সরাসরি অ্যারে ফরম্যাটে আপনার সকল ভেরসেল ও লোকাল ডোমেইন
   trustedOrigins: [
     "https://booknook-client-sepia.vercel.app",
     "https://booknook-client-jww4hg82x-shamim-reja232.vercel.app",
