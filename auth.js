@@ -37,16 +37,9 @@ export const auth = betterAuth({
       sameSite: "none",
       secure: true,
     },
+    // Origin check বন্ধ থাকায় যেকোনো ডোমেইন থেকে লগআউট কাজ করবে
+    disableOriginCheck: true,
   },
-
-  // কোনো ফাংশন নয়, সরাসরি অ্যারে ফরম্যাটে আপনার সকল ভেরসেল ও লোকাল ডোমেইন
-  trustedOrigins: [
-    "https://booknook-client-sepia.vercel.app",
-    "https://booknook-client-jww4hg82x-shamim-reja232.vercel.app",
-    "https://booknook-client-mj35yi7jw-shamim-reja232.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:5000",
-  ],
 
   database: mongodbAdapter(db, { client }),
 
